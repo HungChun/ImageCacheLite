@@ -87,7 +87,6 @@
   NSDate *expirationDate = [NSDate dateWithTimeIntervalSinceNow:-cacheLifeCycle];
   if ([[[[NSFileManager defaultManager] attributesOfItemAtPath:strPath error:nil] fileModificationDate] compare:expirationDate] == NSOrderedAscending) {
     [[NSFileManager defaultManager] removeItemAtPath:strPath error:nil];
-    HiiirLog(@"刪除");
     return NO;
   }else {
     return YES;
