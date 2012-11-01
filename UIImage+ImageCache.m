@@ -8,47 +8,84 @@
 
 #import "UIImage+ImageCache.h"
 #import "NSString+MD5Addition.h"
+#import "ImageCacheLiteManagement.h"
 @implementation UIImage (ImageCache)
 
-+ (void)imageFromURL:(NSURL *)url success:(void (^)(BOOL, UIImage *))block {
-    if ([[url absoluteString] hasSuffix:@".jpeg"] || [[url absoluteString] hasSuffix:@".png"] || [[url absoluteString] hasSuffix:@".jpg"]) {
-        dispatch_queue_t imageQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-        dispatch_async(imageQueue, ^{
-          UIImage *img = [UIImage imageWithData:[NSData dataWithContentsOfURL:url]];//[[UIImage alloc]initWithData:data];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if(img){
-                    block(YES, img);
-                }
-                else {
-                    block(NO, [UIImage imageNamed:@"photoitem.png"]);
-                }
-            });
-        });
++ (void)imageFromURL:(NSURL *)url success:(void (^)(BOOL haveData, UIImage *img))block {
+
+  NSString *imgFileName = [[url absoluteString]stringFromMD5];
+  NSData *mData = [[ImageCacheLiteManagement shareInstance] loadDataFromMemory:imgFileName];
+  if (mData)
+  {
+    NSLog(@"memory.");
+    block(YES,[UIImage imageWithData:mData]);
+  }
+  else
+  {
+    NSLog(@"not from memory.");
+    NSData *data =  [self queryDiskCache:imgFileName];
+    if (data) {
+      if (![self checkImageCacheLifeCycle:[self getCatchPath:imgFileName]]) {
+        [self CacheFile:url andFileNema:imgFileName success:^(BOOL haveData, NSData *aData) {
+          [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:aData key:imgFileName];
+          block(YES,[UIImage imageWithData:aData]);
+        }];
+      }else {
+        [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:data key:imgFileName];
+        block(YES,[UIImage imageWithData:data]);
+      }
     }else{
-        block(NO,[UIImage imageNamed:@"photoitem.png"]);
+      [self CacheFile:url andFileNema:imgFileName success:^(BOOL haveData, NSData *aData) {
+        [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:aData key:imgFileName];
+        block(YES,[UIImage imageWithData:aData]);
+      }];
     }
+  }
+//  dispatch_queue_t imageQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+//  dispatch_async(imageQueue, ^{
+//    UIImage *img = [UIImage imageWithData:[NSData dataWithContentsOfURL:url]];//[[UIImage alloc]initWithData:data];
+//    dispatch_async(dispatch_get_main_queue(), ^{
+//      if(img){
+//        block(YES, img);
+//      }
+//      else {
+//        block(NO, [UIImage imageNamed:@"photoitem.png"]);
+//      }
+//    });
+//  });
+  
 }
 
 + (void)loadImageWithURL:(NSURL *)url success:(void (^)(BOOL haveData,UIImage *img))block{
 
   NSString *imgFileName = [[url absoluteString]stringFromMD5];
-  
-  NSData *data =  [self queryDiskCache:imgFileName];
-  
-  if (data) {
-    if (![self checkImageCacheLifeCycle:[self getCatchPath:imgFileName]]) {
+  NSData *mData = [[ImageCacheLiteManagement shareInstance] loadDataFromMemory:imgFileName];
+  if (mData)
+  {
+    NSLog(@"memory.");
+    block(YES,[UIImage imageWithData:mData]);
+  }
+  else
+  {
+    NSLog(@"not from memory.");
+    NSData *data =  [self queryDiskCache:imgFileName];
+    if (data) {
+      if (![self checkImageCacheLifeCycle:[self getCatchPath:imgFileName]]) {
+        [self CacheFile:url andFileNema:imgFileName success:^(BOOL haveData, NSData *aData) {
+          [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:aData key:imgFileName];
+          block(YES,[UIImage imageWithData:aData]);
+        }];
+      }else {
+        [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:data key:imgFileName];
+        block(YES,[UIImage imageWithData:data]);
+      }
+    }else{
       [self CacheFile:url andFileNema:imgFileName success:^(BOOL haveData, NSData *aData) {
+        [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:aData key:imgFileName];
         block(YES,[UIImage imageWithData:aData]);
       }];
-    }else {
-      block(YES,[UIImage imageWithData:data]);
     }
-  }else{
-    [self CacheFile:url andFileNema:imgFileName success:^(BOOL haveData, NSData *aData) {
-      block(YES,[UIImage imageWithData:aData]);
-    }];
-  }
-}
+  }}
 
 + (void)CacheFile:(NSURL *)url andFileNema:(NSString *)strFileName success:(void (^)(BOOL haveData,NSData *aData))block{
   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{

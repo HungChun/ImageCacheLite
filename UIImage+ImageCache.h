@@ -10,7 +10,7 @@
 
 @interface UIImage (ImageCache)
 
-+ (void)imageFromURL:(NSURL *)url success:(void (^)(BOOL, UIImage *))block;
++ (void)imageFromURL:(NSURL *)url success:(void (^)(BOOL haveData, UIImage *img))block;
 
 + (void)loadImageWithURL:(NSURL *)url success:(void (^)(BOOL haveData,UIImage *img))block;
 

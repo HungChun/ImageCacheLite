@@ -8,14 +8,17 @@
 
 #import "UIImageView+ImageCache.h"
 #import "NSString+MD5Addition.h"
-
+#import "ImageCacheLiteManagement.h"
 @implementation UIImageView (ImageCache)
 -(void)ShowActivityView{
     UIActivityIndicatorView *act = [[UIActivityIndicatorView alloc]initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
     [act startAnimating];
     [act setFrame:CGRectMake((self.frame.size.width - 20) / 2, (self.frame.size.height - 20) / 2, 20, 20)];
     [self addSubview:act];
-    [act release];
+#if ! __has_feature(objc_arc)
+  [act release];
+#endif
+    
 }
 
 -(void)HideActivityView{
@@ -26,18 +29,27 @@
 
 -(void)loadImageWithURL:(NSURL *)url{
     //背景圖設定
-    self.image = [UIImage imageNamed:@"photoitem.png"];
+    //self.image = [UIImage imageNamed:@"photoitem.png"];
+  
     NSString *imgFileName = [[url absoluteString]stringFromMD5];
+  NSData *mData = [[ImageCacheLiteManagement shareInstance] loadDataFromMemory:imgFileName];
+  if (mData) {
+    self.image = [UIImage imageWithData:mData];
+  }
+  else
+  {
     NSData *data =  [self queryDiskCache:imgFileName];
     if (data) {
-        if (![self checkImageCacheLifeCycle:[self getCatchPath:imgFileName]]) {
-            [self CacheFile:url andFileNema:imgFileName];
-        }else {
-            self.image = [UIImage imageWithData:data];
-        }
-    }else{
+      if (![self checkImageCacheLifeCycle:[self getCatchPath:imgFileName]]) {
         [self CacheFile:url andFileNema:imgFileName];
+      }else {
+        self.image = [UIImage imageWithData:data];
+        [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:data key:imgFileName];
+      }
+    }else{
+      [self CacheFile:url andFileNema:imgFileName];
     }
+  }
 }
 
 -(void)CacheFile:(NSURL *)url andFileNema:(NSString *)strFileName{
@@ -58,6 +70,7 @@
             if (isShowActivity) {
                 [self HideActivityView];
             }
+          [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:imgData key:strFileName];
             self.image = image; 
         });
         UIGraphicsEndImageContext();

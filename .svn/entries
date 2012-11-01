@@ -94,6 +94,13 @@ luke
 
 683
 
+ImageCacheLiteManagement.h
+file
+0
+
+
+add
+
 UIImage+ImageCache.h
 file
 
@@ -195,6 +202,13 @@ has-props
 
 
 272
+
+ImageCacheLiteManagement.m
+file
+0
+
+
+add
 
 UIImage+ImageCache.m
 file
