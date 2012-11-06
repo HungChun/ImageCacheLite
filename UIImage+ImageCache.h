@@ -10,8 +10,6 @@
 
 @interface UIImage (ImageCache)
 
-+ (void)imageFromURL:(NSURL *)url success:(void (^)(BOOL haveData, UIImage *img))block;
-
 + (void)loadImageWithURL:(NSURL *)url success:(void (^)(BOOL haveData,UIImage *img))block;
 
 + (void)CacheFile:(NSURL *)url andFileNema:(NSString *)strFileName success:(void (^)(BOOL haveData,NSData *aData))block;
@@ -21,5 +19,7 @@
 + (BOOL)checkImageCacheLifeCycle:(NSString *)strPath;
 
 + (NSString *)getCatchPath:(NSString *)strFileName;
+
++ (void)checkImageCacheLifeAndClean;
 
 @end

@@ -7,6 +7,8 @@
 //
 
 #import "ImageCacheLiteManagement.h"
+#import "UIImage+ImageCache.h"
+#import "UIImageView+ImageCache.h"
 
 static ImageCacheLiteManagement *_mangement;
 @implementation ImageCacheLiteManagement
@@ -45,6 +47,8 @@ static ImageCacheLiteManagement *_mangement;
 - (void)releaseMemory
 {
   NSLog(@"release memory");
+  [UIImage checkImageCacheLifeAndClean];
+  [UIImageView checkImageCacheLifeAndClean];
   [_cacheDict removeAllObjects];
 }
 
