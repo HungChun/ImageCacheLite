@@ -4,7 +4,7 @@
 //
 //  Created by HungChun on 12/11/1.
 //  Copyright (c) 2012年 HungChun. All rights reserved.
-//
+//  Email : hungchun713@gmail.com
 
 #import "ImageCacheLiteManagement.h"
 #import "UIImage+ImageCache.h"
@@ -14,6 +14,8 @@ static ImageCacheLiteManagement *_mangement;
 @implementation ImageCacheLiteManagement
 {
   NSMutableDictionary *_cacheDict;
+  dispatch_queue_t downloadPhotoQueue;
+  dispatch_queue_t cachePhotoQueue;
 }
 
 + (ImageCacheLiteManagement *)shareInstance
@@ -31,6 +33,8 @@ static ImageCacheLiteManagement *_mangement;
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(releaseMemory) name:UIApplicationDidReceiveMemoryWarningNotification object:nil];
   [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(releaseMemory) name:UIApplicationDidEnterBackgroundNotification object:nil];
   _cacheDict = [[NSMutableDictionary alloc] init];
+  downloadPhotoQueue = dispatch_queue_create("DownloadImage", 0);
+  cachePhotoQueue = dispatch_queue_create("CacheImage", 0);
 }
 
 - (NSData *)loadDataFromMemory:(NSString *)key
@@ -43,6 +47,17 @@ static ImageCacheLiteManagement *_mangement;
   if (data) 
     [_cacheDict setObject:data forKey:key];
 }
+
+- (dispatch_queue_t)downloadQueue
+{
+  return downloadPhotoQueue;
+}
+
+- (dispatch_queue_t)cacheQueue
+{
+  return cachePhotoQueue;
+}
+
 
 - (void)releaseMemory
 {

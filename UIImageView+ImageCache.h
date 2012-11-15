@@ -3,8 +3,8 @@
 //  ImageCache
 //
 //  Created by HungChun on 12/5/1.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
-//
+//  Copyright (c) 2012年 HungChun. All rights reserved.
+//  Email : hungchun713@gmail.com
 
 #import <UIKit/UIKit.h>
 

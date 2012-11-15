@@ -3,8 +3,8 @@
 //  iCase
 //
 //  Created by HungChun on 12/7/23.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
-//
+//  Copyright (c) 2012年 HungChun. All rights reserved.
+//  Email : hungchun713@gmail.com
 
 #import "UIImage+ImageCache.h"
 #import "NSString+MD5Addition.h"
@@ -12,6 +12,7 @@
 @implementation UIImage (ImageCache)
 
 + (void)loadImageWithURL:(NSURL *)url success:(void (^)(BOOL haveData,UIImage *img))block{
+  dispatch_queue_t cachePhotoQueue = [[ImageCacheLiteManagement shareInstance] cacheQueue];
   NSString *imgFileName = [[url absoluteString]stringFromMD5];
   NSData *mData = [[ImageCacheLiteManagement shareInstance] loadDataFromMemory:imgFileName];
   if (mData)
@@ -25,20 +26,20 @@
       if (![self checkImageCacheLifeCycle:[self getCatchPath:imgFileName]]) {
         [self CacheFile:url andFileNema:imgFileName success:^(BOOL haveData, NSData *aData) {
           block(YES,[UIImage imageWithData:aData]);
-          dispatch_async(dispatch_queue_create("Cache", 0), ^{
+          dispatch_async(cachePhotoQueue, ^{
             [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:aData key:imgFileName];
           });
         }];
       }else {
         block(YES,[UIImage imageWithData:data]);
-        dispatch_async(dispatch_queue_create("Cache", 0), ^{
+        dispatch_async(cachePhotoQueue, ^{
           [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:data key:imgFileName];
         });
       }
     }else{
       [self CacheFile:url andFileNema:imgFileName success:^(BOOL haveData, NSData *aData) {
         block(YES,[UIImage imageWithData:aData]);
-        dispatch_async(dispatch_queue_create("Cache", 0), ^{
+        dispatch_async(cachePhotoQueue, ^{
           [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:aData key:imgFileName];
         });
       }];
@@ -47,7 +48,8 @@
 }
 
 + (void)CacheFile:(NSURL *)url andFileNema:(NSString *)strFileName success:(void (^)(BOOL haveData,NSData *aData))block{
-  dispatch_async(dispatch_queue_create("DownloadImage", 0), ^{
+  dispatch_queue_t downloadPhotoQueue = [[ImageCacheLiteManagement shareInstance] downloadQueue];
+  dispatch_async(downloadPhotoQueue, ^{
     NSData *imgData = [NSData dataWithContentsOfURL:url];
     dispatch_async(dispatch_get_main_queue(), ^{
       if (imgData) {

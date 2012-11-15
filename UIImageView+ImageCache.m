@@ -3,8 +3,8 @@
 //  ImageCache
 //
 //  Created by HungChun on 12/5/1.
-//  Copyright (c) 2012年 __MyCompanyName__. All rights reserved.
-//
+//  Copyright (c) 2012年 HungChun. All rights reserved.
+//  Email : hungchun713@gmail.com
 
 #import "UIImageView+ImageCache.h"
 #import "NSString+MD5Addition.h"
@@ -30,11 +30,11 @@
 -(void)loadImageWithURL:(NSURL *)url{
   //背景圖設定
   //self.image = [UIImage imageNamed:@"photoitem.png"];
-  
+  dispatch_queue_t cachePhotoQueue = [[ImageCacheLiteManagement shareInstance] cacheQueue];
   NSString *imgFileName = [[url absoluteString]stringFromMD5];
   NSData *mData = [[ImageCacheLiteManagement shareInstance] loadDataFromMemory:imgFileName];
   if (mData) {
-    self.image = [UIImage imageWithData:mData];
+      self.image = [UIImage imageWithData:mData];
   }
   else
   {
@@ -44,7 +44,7 @@
         [self CacheFile:url andFileNema:imgFileName];
       }else {
         self.image = [UIImage imageWithData:data];
-        dispatch_async(dispatch_queue_create("Cache", 0), ^{
+        dispatch_async(cachePhotoQueue, ^{
           [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:data key:imgFileName];
         });
       }
@@ -59,16 +59,19 @@
 }
 
 -(void)CacheFile:(NSURL *)url andFileNema:(NSString *)strFileName andShowActivity:(BOOL)isShowActivity{
+  dispatch_queue_t cachePhotoQueue = [[ImageCacheLiteManagement shareInstance] cacheQueue];
+  dispatch_queue_t downloadPhotoQueue = [[ImageCacheLiteManagement shareInstance] downloadQueue];
   if (isShowActivity) {
     [self ShowActivityView];
   }
-  dispatch_async(dispatch_queue_create("DownloadImage", 0), ^{
+  
+  dispatch_async(downloadPhotoQueue, ^{
     NSData *imgData = [NSData dataWithContentsOfURL:url];
     UIImage *image = [UIImage imageWithData:imgData];
     dispatch_async(dispatch_get_main_queue(), ^{
       self.image = image;
     });
-    dispatch_async(dispatch_queue_create("Cache", 0), ^{
+    dispatch_async(cachePhotoQueue, ^{
       [imgData writeToFile:[self getCatchPath:strFileName] atomically:YES];
       [[ImageCacheLiteManagement shareInstance] cacheImageToMemory:imgData key:strFileName];
     });
